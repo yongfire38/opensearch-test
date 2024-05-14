@@ -23,4 +23,7 @@ public interface EgovVecService {
 	public SearchResponse<JsonNode> colorSearch(String indexName, Color color) throws IOException;
 	
 	public SearchResponse<JsonNode> colorTextSearch(String indexName, String query) throws IOException;
+	
+	public SearchResponse<JsonNode> textSearch(String indexName, String query) throws IOException;
+	
 }

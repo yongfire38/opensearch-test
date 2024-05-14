@@ -241,7 +241,40 @@ public class EgovVecController {
 		}
 		
 		return resultVO;
-		
 	}
 	
+	@Operation(
+			summary = "텍스트를 기초로 한 벡터 검색(Text) 수행",
+			description = "벡터 데이터(Text)가 있는 인덱스의 데이터를 텍스트를 받아서 벡터 검색",
+			tags = {"EgovVecController"}
+	)
+	@GetMapping("/textList/{indexName}/{query}")
+	public ResultVO textVecData(@PathVariable String indexName, @PathVariable String query) throws IOException {
+		
+		ResultVO resultVO = new ResultVO();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		
+		List<JsonNode> resultList = new ArrayList<>();
+		
+		try {
+			SearchResponse<JsonNode> searchResponse = vecService.textSearch(indexName, query);
+			
+			for (int i = 0; i< searchResponse.hits().hits().size(); i++) {
+				resultList.add(searchResponse.hits().hits().get(i).source().get("text"));
+		      }
+			resultMap.put("resultList", resultList);
+			
+			resultVO.setResult(resultMap);
+			resultVO.setResultCode(ResponseCode.SUCCESS.getCode());
+			resultVO.setResultMessage(ResponseCode.SUCCESS.getMessage());
+			
+			log.debug("##### OpenSearch getTextVecData Complete");
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return resultVO;
+	}
+		
 }
