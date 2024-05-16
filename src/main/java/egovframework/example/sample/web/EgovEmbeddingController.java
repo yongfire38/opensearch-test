@@ -1,0 +1,96 @@
+package egovframework.example.sample.web;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Resource;
+
+import org.opensearch.client.opensearch.core.SearchResponse;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+import egovframework.example.cmm.ResponseCode;
+import egovframework.example.cmm.ResultVO;
+import egovframework.example.sample.service.EgovEmbeddingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
+
+@RestController
+@Slf4j
+@Tag(name="EgovEmbeddingController",description = "테스트용 CONTROLLER(임베딩 테스트)")
+public class EgovEmbeddingController {
+	
+	@Resource(name="embeddingService")
+	private EgovEmbeddingService embeddingService;
+	
+	@Operation(
+			summary = "인덱스 생성",
+			description = "벡터 RGB 검색을 위한 OpenSearch(color) 인덱스를 생성",
+			tags = {"EgovColorController"}
+	)
+	@GetMapping("/createEmbeddingIndex/{indexName}")
+	public ResultVO createColorIndex(@PathVariable String indexName) {
+		
+		ResultVO resultVO = new ResultVO();
+		
+		try {
+			log.debug("##### OpenSearch createIndex...");
+			embeddingService.createEmbeddingIndex(indexName);
+			
+			resultVO.setResultCode(ResponseCode.SUCCESS.getCode());
+			resultVO.setResultMessage(ResponseCode.SUCCESS.getMessage());
+			
+			log.debug("##### OpenSearch create vecIndex Complete");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return resultVO;
+	}
+	
+	
+	
+	
+	
+	@Operation(
+			summary = "텍스트를 기초로 한 벡터 검색(Text) 수행",
+			description = "벡터 데이터(Text)가 있는 인덱스의 데이터를 텍스트를 받아서 벡터 검색",
+			tags = {"EgovEmbeddingController"}
+	)
+	@GetMapping("/textList/{indexName}/{query}")
+	public ResultVO textVecData(@PathVariable String indexName, @PathVariable String query) throws IOException {
+		
+		ResultVO resultVO = new ResultVO();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		
+		List<JsonNode> resultList = new ArrayList<>();
+		
+		try {
+			SearchResponse<JsonNode> searchResponse = embeddingService.textSearch(indexName, query);
+			
+			for (int i = 0; i< searchResponse.hits().hits().size(); i++) {
+				resultList.add(searchResponse.hits().hits().get(i).source().get("text"));
+		      }
+			resultMap.put("resultList", resultList);
+			
+			resultVO.setResult(resultMap);
+			resultVO.setResultCode(ResponseCode.SUCCESS.getCode());
+			resultVO.setResultMessage(ResponseCode.SUCCESS.getMessage());
+			
+			log.debug("##### OpenSearch getTextVecData Complete");
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return resultVO;
+	}
+
+}
