@@ -9,5 +9,9 @@ public interface EgovEmbeddingService {
 	public void createEmbeddingIndex(String indexName) throws IOException;
 	
 	public SearchResponse<JsonNode> textSearch(String indexName, String query) throws IOException;
+	
+	public void insertEmbeddingData(String indexName) throws IOException;
+	
+	public void toJsonConverter() throws IOException;
 
 }

@@ -32,8 +32,8 @@ public class EgovEmbeddingController {
 	
 	@Operation(
 			summary = "인덱스 생성",
-			description = "벡터 RGB 검색을 위한 OpenSearch(color) 인덱스를 생성",
-			tags = {"EgovColorController"}
+			description = "벡터 검색을 위한 OpenSearch(text) 인덱스를 생성",
+			tags = {"EgovEmbeddingController"}
 	)
 	@GetMapping("/createEmbeddingIndex/{indexName}")
 	public ResultVO createColorIndex(@PathVariable String indexName) {
@@ -92,5 +92,46 @@ public class EgovEmbeddingController {
 		
 		return resultVO;
 	}
-
+	
+	@Operation(
+			summary = "데이터 추가",
+			description = "OpenSearch 인덱스(text)에 임베딩된 데이터를 추가(벌크 insert)",
+			tags = {"EgovEmbeddingController"}
+	)
+	@GetMapping("/insertEmbeddingData/{indexName}")
+	public ResultVO insertEmbeddingData(@PathVariable String indexName) {
+		
+		ResultVO resultVO = new ResultVO();
+		
+		try {
+			embeddingService.insertEmbeddingData(indexName);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		log.debug("##### OpenSearch getTextVecData Complete");
+		
+		return resultVO;
+	}
+	
+	@Operation(
+			summary = "데이터 추가",
+			description = "OpenSearch 인덱스(text)에 임베딩된 데이터를 추가(벌크 insert)",
+			tags = {"EgovEmbeddingController"}
+	)
+	@GetMapping("/convertToJson")
+	public ResultVO convertToJson() {
+		
+		ResultVO resultVO = new ResultVO();
+		try {
+			embeddingService.toJsonConverter();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return resultVO;
+		
+	}
 }
