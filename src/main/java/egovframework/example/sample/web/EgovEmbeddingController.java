@@ -90,6 +90,41 @@ public class EgovEmbeddingController {
 	}
 	
 	@Operation(
+			summary = "한국어 텍스트 검색(Text) 수행",
+			description = "한국어 텍스트 검색 수행. 약간의 오타는 무시하는 설정 추가",
+			tags = {"EgovEmbeddingController"}
+	)
+	@GetMapping("/koreanTextList/{indexName}/{query}")
+	public ResultVO textData(@PathVariable String indexName, @PathVariable String query) throws IOException {
+		
+		ResultVO resultVO = new ResultVO();
+		Map<String, Object> resultMap = new HashMap<String, Object>();
+		
+		List<JsonNode> resultList = new ArrayList<>();
+		
+		try {
+			SearchResponse<JsonNode> searchResponse = embeddingService.textSearch(indexName, query);
+			
+			for (int i = 0; i< searchResponse.hits().hits().size(); i++) {
+				resultList.add(searchResponse.hits().hits().get(i).source().get("text"));
+		      }
+			resultMap.put("resultList", resultList);
+			
+			resultVO.setResult(resultMap);
+			resultVO.setResultCode(ResponseCode.SUCCESS.getCode());
+			resultVO.setResultMessage(ResponseCode.SUCCESS.getMessage());
+			
+			log.debug("##### OpenSearch getKoreanTextData Complete");
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return resultVO;
+		
+	}
+	
+	@Operation(
 			summary = "데이터 추가",
 			description = "OpenSearch 인덱스(text)에 임베딩된 데이터를 추가(벌크 insert)",
 			tags = {"EgovEmbeddingController"}

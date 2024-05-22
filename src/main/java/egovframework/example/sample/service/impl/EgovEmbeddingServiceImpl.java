@@ -144,7 +144,7 @@ private final OpenSearchClient client;
 
 		SearchRequest textSearchRequest = new SearchRequest.Builder()
 				.index(indexName)
-				.query(q -> q.match(m -> m.field("embedding").query(FieldValue.of(query)).analyzer("")))
+				.query(q -> q.match(m -> m.field("text").query(FieldValue.of(query)).analyzer("nori").fuzziness("AUTO")))
 			    .build();
 		
 		SearchResponse<JsonNode> textSearchResponse = client.search(textSearchRequest, JsonNode.class);
