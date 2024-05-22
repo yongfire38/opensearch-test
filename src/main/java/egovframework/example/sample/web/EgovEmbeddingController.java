@@ -55,10 +55,6 @@ public class EgovEmbeddingController {
 		return resultVO;
 	}
 	
-	
-	
-	
-	
 	@Operation(
 			summary = "텍스트를 기초로 한 벡터 검색(Text) 수행",
 			description = "벡터 데이터(Text)가 있는 인덱스의 데이터를 텍스트를 받아서 벡터 검색",
@@ -73,7 +69,7 @@ public class EgovEmbeddingController {
 		List<JsonNode> resultList = new ArrayList<>();
 		
 		try {
-			SearchResponse<JsonNode> searchResponse = embeddingService.textSearch(indexName, query);
+			SearchResponse<JsonNode> searchResponse = embeddingService.vectorSearch(indexName, query);
 			
 			for (int i = 0; i< searchResponse.hits().hits().size(); i++) {
 				resultList.add(searchResponse.hits().hits().get(i).source().get("text"));
@@ -106,7 +102,6 @@ public class EgovEmbeddingController {
 		try {
 			embeddingService.insertEmbeddingData(indexName);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -117,8 +112,8 @@ public class EgovEmbeddingController {
 	}
 	
 	@Operation(
-			summary = "데이터 추가",
-			description = "OpenSearch 인덱스(text)에 임베딩된 데이터를 추가(벌크 insert)",
+			summary = "json 변환",
+			description = "문자열 파일을 읽어서 json 파일로 변환, 이 과정에서 각 문자열을 임베딩한 결과도 추가",
 			tags = {"EgovEmbeddingController"}
 	)
 	@GetMapping("/convertToJson")

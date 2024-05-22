@@ -14,7 +14,10 @@ import org.egovframe.rte.fdl.cmmn.EgovAbstractServiceImpl;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch._types.FieldValue;
 import org.opensearch.client.opensearch._types.OpenSearchException;
+import org.opensearch.client.opensearch._types.analysis.NoriDecompoundMode;
+import org.opensearch.client.opensearch._types.analysis.TokenizerDefinition;
 import org.opensearch.client.opensearch.core.BulkRequest;
 import org.opensearch.client.opensearch.core.BulkRequest.Builder;
 import org.opensearch.client.opensearch.core.SearchRequest;
@@ -49,7 +52,7 @@ private final OpenSearchClient client;
 	@Value("${bulk.insert.txt}")
 	public String txtFilePath;
 	
-	@Value("${bulk.insert.jsontest}")
+	@Value("${bulk.insert.jsontext}")
 	public String jsonFilePath;
 	
 	int index = 1;
@@ -57,10 +60,19 @@ private final OpenSearchClient client;
 	@Override
 	public void createEmbeddingIndex(String indexName) throws IOException {
 		
+		TokenizerDefinition noriTokenizer = new TokenizerDefinition.Builder()
+                .noriTokenizer(n -> n
+                		.decompoundMode(NoriDecompoundMode.Mixed)
+                ).build();
+		
 		CreateIndexRequest createIndexRequest = new CreateIndexRequest.Builder()
 			    .index(indexName)
 			    .settings(s -> s
 			        .knn(true)
+			        .analysis(a -> a
+                            .tokenizer("nori_mixed", t->t
+                            		.definition(noriTokenizer))
+                    )       		
 			    )
 			    .mappings(m -> m
 			        .properties("id", p -> p
@@ -71,6 +83,7 @@ private final OpenSearchClient client;
 			        .properties("text", p -> p
 			            .text(f -> f
 			                .index(true)
+			                .analyzer("nori")
 			            )
 			        )
 			        .properties("embedding", p -> p
@@ -93,7 +106,7 @@ private final OpenSearchClient client;
 	}
 	
 	@Override
-	public SearchResponse<JsonNode> textSearch(String indexName, String query) throws IOException {
+	public SearchResponse<JsonNode> vectorSearch(String indexName, String query) throws IOException {
 		
 		//질의 문자열을 벡터로 변환한다
 		EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
@@ -125,13 +138,29 @@ private final OpenSearchClient client;
 				
 		return searchResponse;
 	}
+	
+	@Override
+	public SearchResponse<JsonNode> textSearch(String indexName, String query) throws IOException {
+
+		SearchRequest textSearchRequest = new SearchRequest.Builder()
+				.index(indexName)
+				.query(q -> q.match(m -> m.field("embedding").query(FieldValue.of(query)).analyzer("")))
+			    .build();
+		
+		SearchResponse<JsonNode> textSearchResponse = client.search(textSearchRequest, JsonNode.class);
+		
+		return textSearchResponse;
+		
+	}
 
 	@Override
 	public void insertEmbeddingData(String indexName) throws IOException {
 		
+		long beforeTime = System.currentTimeMillis();
+		
 		//문자열 파일을 읽어서 json 파일로 변환, 이 과정에서 각 문자열을 임베딩한 결과도 추가한다 
-		
-		
+		//toJsonConverter 호출...
+		toJsonConverter();
 		
 		//만들어진 json 파일을 읽어서 벌크 인덱싱 처리
 		List<Map<String, Object>> parsedJsonList = JsonParser.parseJsonList(jsonFilePath);
@@ -149,6 +178,11 @@ private final OpenSearchClient client;
 		BulkRequest bulkRequest = bulkRequestBuilder.build();
 
 		client.bulk(bulkRequest); 
+		
+		long afterTime = System.currentTimeMillis(); 
+		long secDiffTime = (afterTime - beforeTime)/1000;
+		
+		log.debug("시간차이(m) : " + secDiffTime + "초");
 	}
 
 	@Override
