@@ -13,13 +13,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Controller
 @Tag(name="EgovSampleController",description = "메인 페이지")
 public class EgovSampleController {
-
+	
 	@Operation(
 			summary = "템플릿 화면",
 			description = "템플릿 화면을 출력",
 			tags = {"EgovSampleController"}
 	)
-	@GetMapping("/")
+	@GetMapping("/fruit")
     public String getFruit(Model model) {
     	
 		Map<String, String> fruitmap = new HashMap<String, String>();
@@ -62,7 +62,7 @@ public class EgovSampleController {
 		}
 		*/
         
-		return "fruit/fruit.html";
+		return "fruit/fruit";
     }
 	
 }

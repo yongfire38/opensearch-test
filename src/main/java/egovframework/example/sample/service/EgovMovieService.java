@@ -43,7 +43,9 @@ public interface EgovMovieService {
 	
 	public void updateData(String indexName, Movie movie, String id) throws IOException;
 	
-	public SearchResponse<Movie> search(String indexName) throws IOException;
+	public SearchResponse<Movie> searchAll(String indexName) throws IOException;
+	
+	public SearchResponse<Movie> search(String indexName, String query) throws IOException;
 	
 	public void deleteData(String indexName, String id) throws IOException;
 	

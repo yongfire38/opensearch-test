@@ -6,6 +6,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -16,8 +19,19 @@ import org.json.JSONObject;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch._types.FieldValue;
 import org.opensearch.client.opensearch._types.OpenSearchException;
+import org.opensearch.client.opensearch._types.analysis.Analyzer;
+import org.opensearch.client.opensearch._types.analysis.AsciiFoldingTokenFilter;
+import org.opensearch.client.opensearch._types.analysis.CharFilter;
+import org.opensearch.client.opensearch._types.analysis.CustomAnalyzer;
+import org.opensearch.client.opensearch._types.analysis.HtmlStripCharFilter;
+import org.opensearch.client.opensearch._types.analysis.LowercaseTokenFilter;
 import org.opensearch.client.opensearch._types.analysis.NoriDecompoundMode;
-import org.opensearch.client.opensearch._types.analysis.TokenizerDefinition;
+import org.opensearch.client.opensearch._types.analysis.NoriPartOfSpeechTokenFilter;
+import org.opensearch.client.opensearch._types.analysis.NoriTokenizer;
+import org.opensearch.client.opensearch._types.analysis.PatternReplaceCharFilter;
+import org.opensearch.client.opensearch._types.analysis.SynonymGraphTokenFilter;
+import org.opensearch.client.opensearch._types.analysis.TokenFilter;
+import org.opensearch.client.opensearch._types.analysis.Tokenizer;
 import org.opensearch.client.opensearch.core.BulkRequest;
 import org.opensearch.client.opensearch.core.BulkRequest.Builder;
 import org.opensearch.client.opensearch.core.SearchRequest;
@@ -60,18 +74,88 @@ private final OpenSearchClient client;
 	@Override
 	public void createEmbeddingIndex(String indexName) throws IOException {
 		
-		TokenizerDefinition noriTokenizer = new TokenizerDefinition.Builder()
-                .noriTokenizer(n -> n
-                		.decompoundMode(NoriDecompoundMode.Mixed)
-                ).build();
+		Map<String, Tokenizer> tokenizerMap = new HashMap<>();
+		Map<String, Analyzer> analyzerMap = new HashMap<>();
+		Map<String, TokenFilter> tokenFilterMap = new HashMap<>();
+        //Map<String, Normalizer> normalizerMap = new HashMap<>(); //normalizer 이용 시에만 추가
+        Map<String, CharFilter> charFilterMap = new HashMap<>();
 		
+        // char filter : html 태그를 제거한다
+		HtmlStripCharFilter htmlStripFilter = new HtmlStripCharFilter.Builder().build();
+		CharFilter chrFilter =  new CharFilter.Builder().definition(htmlStripFilter._toCharFilterDefinition()).build();
+		charFilterMap.put("htmlfilter", chrFilter);
+		
+		// remove punctuation chars : 구두점을 제거한다
+		PatternReplaceCharFilter patternCharFilter = new PatternReplaceCharFilter.Builder().pattern("\\p{Punct}").replacement("").flags("CASE_INSENSITIVE|MULTILINE").build();
+		CharFilter chrPatternFilter =  new CharFilter.Builder().definition(patternCharFilter._toCharFilterDefinition()).build();
+		charFilterMap.put("patternfilter", chrPatternFilter);
+		
+		List<String> charFilterList = new ArrayList<>();
+        charFilterList.add("htmlfilter");
+        charFilterList.add("patternfilter");
+        
+     // 제거할 품사를 열거한다 : NR - 수사
+        List<String> stopTags = Arrays.asList("NR");
+        
+        // Token filter : 소문자 변환 / 비ASCII 문자를 ASCII 문자로 변환 / 한국어의 특정 품사를 제거
+        LowercaseTokenFilter lowerFilter = new LowercaseTokenFilter.Builder().build();
+        AsciiFoldingTokenFilter asciiFilter = new AsciiFoldingTokenFilter.Builder().preserveOriginal(false).build();
+        NoriPartOfSpeechTokenFilter noriPartOfSpeechFilter = new NoriPartOfSpeechTokenFilter.Builder().stoptags(stopTags).build();        
+        tokenFilterMap.put("lowercase", new TokenFilter.Builder().definition(lowerFilter._toTokenFilterDefinition()).build());
+        tokenFilterMap.put("asciifolding", new TokenFilter.Builder().definition(asciiFilter._toTokenFilterDefinition()).build());
+        tokenFilterMap.put("nori_part_of_speech", new TokenFilter.Builder().definition(noriPartOfSpeechFilter._toTokenFilterDefinition()).build());
+        
+        List<String> synonym = Arrays.asList("amazon, aws", "풋사과, 햇사과, 사과");
+        
+        SynonymGraphTokenFilter synonymFilter = new SynonymGraphTokenFilter.Builder().synonyms(synonym).expand(true).build();
+        tokenFilterMap.put("synonym_graph", new TokenFilter.Builder().definition(synonymFilter._toTokenFilterDefinition()).build());
+        
+		List<String> tokenFilterList = new ArrayList<>();
+		
+		tokenFilterList.add("lowercase");
+		tokenFilterList.add("asciifolding");
+		tokenFilterList.add("synonym_graph");
+		tokenFilterList.add("nori_number"); // 한국어 숫자의 검색을 가능하게 함
+		tokenFilterList.add("nori_readingform"); // 한자의 한국어 검색을 가능하게 함
+		tokenFilterList.add("nori_part_of_speech");
+		
+		List<String> userDictionaryRules = Arrays.asList("낮말", "밤말");
+		
+		// 한글형태소분석기인 Nori 플러그인이 미리 설치되어 있어야 함
+		NoriTokenizer noriTokenizer = new NoriTokenizer.Builder()
+				.decompoundMode(NoriDecompoundMode.Discard)
+				.discardPunctuation(true)
+				.userDictionaryRules(userDictionaryRules)
+				.build();
+		
+		Tokenizer tokenizer = new Tokenizer.Builder().definition(noriTokenizer._toTokenizerDefinition()).build();
+		tokenizerMap.put("nori-tokenizer", tokenizer);
+		
+		// 커스텀 Analyzer 구성 : char_filter ==> tokenizer ==> token filter
+		CustomAnalyzer noriAnalyzer = new CustomAnalyzer.Builder()
+				.charFilter(charFilterList)
+				.tokenizer("nori-tokenizer")
+				.filter(tokenFilterList).build();
+		
+		Analyzer analyzer = new Analyzer.Builder().custom(noriAnalyzer).build();
+		analyzerMap.put("nori-analyzer", analyzer);
+		
+		/* normalizer 설정 : term query와 같은 분석기를 사용하지 않는 질의에 적용된다. 
+		normalizerMap.put("keyword_normalizer", new Normalizer.Builder()
+			        .custom(new CustomNormalizer.Builder().charFilter("patternfilter").filter(tokenFilterList).build())
+			        .build());
+		*/
+			
 		CreateIndexRequest createIndexRequest = new CreateIndexRequest.Builder()
 			    .index(indexName)
 			    .settings(s -> s
 			        .knn(true)
 			        .analysis(a -> a
-                            .tokenizer("nori_mixed", t->t
-                            		.definition(noriTokenizer))
+			        		.charFilter(charFilterMap)
+			        		//.normalizer(normalizerMap)
+			        		.tokenizer(tokenizerMap)
+			        		.filter(tokenFilterMap)
+			        		.analyzer(analyzerMap)
                     )       		
 			    )
 			    .mappings(m -> m
@@ -83,7 +167,7 @@ private final OpenSearchClient client;
 			        .properties("text", p -> p
 			            .text(f -> f
 			                .index(true)
-			                .analyzer("nori")
+			                .analyzer("nori-analyzer")
 			            )
 			        )
 			        .properties("embedding", p -> p
@@ -144,7 +228,7 @@ private final OpenSearchClient client;
 
 		SearchRequest textSearchRequest = new SearchRequest.Builder()
 				.index(indexName)
-				.query(q -> q.match(m -> m.field("text").query(FieldValue.of(query)).analyzer("nori").fuzziness("AUTO")))
+				.query(q -> q.match(m -> m.field("text").query(FieldValue.of(query)).analyzer("nori-analyzer").fuzziness("AUTO")))
 			    .build();
 		
 		SearchResponse<JsonNode> textSearchResponse = client.search(textSearchRequest, JsonNode.class);
