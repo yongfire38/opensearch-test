@@ -19,6 +19,23 @@
 	    function notNullCheck(value) {
             return !(value === '' || value == null || (typeof value == 'object' && !Object.keys(value).length));
         }
+	    
+	    function movieSearch() {
+            if (notNullCheck($('#searchKeyword').val())) {
+                $.ajax({
+                    url: contextPath + '/movie/list',
+                    type: 'post',
+                    data: {
+                        title: $('#searchKeyword').val()
+                    }
+                }).done(function(fragment) {
+                    $('#content_pop').replaceWith(fragment);
+                });
+            } else {
+                //const errorMessage = [[#{search.error}]];
+                //alert(errorMessage);
+            }
+        }
     </script>
 </head>
 

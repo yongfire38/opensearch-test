@@ -242,8 +242,8 @@ public class EgovMovieController {
 	}
 	
 	@GetMapping("/")
-	public String search(Model model) throws Exception {
-		return this.movieList(model);
+	public String search(Model model, Movie movie) throws Exception {
+		return this.movieList(model, movie);
 	}
 	
 	@Operation(
@@ -252,7 +252,7 @@ public class EgovMovieController {
 			tags = {"EgovSampleController"}
 	)
 	@PostMapping("/movie/list")
-	public String movieList(Model model) {
+	public String movieList(Model model, Movie movie) {
 		
 		SampleDefaultVO sampleDefaultVO = new SampleDefaultVO();
 		
@@ -265,8 +265,16 @@ public class EgovMovieController {
 		List<Movie> resultList = new ArrayList<>();
 		
 		try {
-			log.debug("##### OpenSearch getList...");
-			SearchResponse<Movie> searchResponse = movieService.searchAll("movie-index");
+			
+			SearchResponse<Movie> searchResponse = null;
+			
+			if(movie.getTitle() != null && !movie.getTitle().equals("")) {
+				log.debug("##### OpenSearch getMovieData...");
+				searchResponse = movieService.search("movie-index", movie.getTitle());
+			} else {
+				log.debug("##### OpenSearch getMovieList...");
+				searchResponse = movieService.searchAll("movie-index");
+			}
 			
 			for (int i = 0; i< searchResponse.hits().hits().size(); i++) {
 				resultList.add(searchResponse.hits().hits().get(i).source());
