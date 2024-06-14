@@ -69,6 +69,12 @@ private final OpenSearchClient client;
 	@Value("${bulk.insert.jsontext}")
 	public String jsonFilePath;
 	
+	@Value("${synonyms.path}")
+	public String synonymsPath;
+	
+	@Value("${dictionary.path}")
+	public String dictionaryRulesPath;
+	
 	int index = 1;
 	
 	@Override
@@ -94,7 +100,7 @@ private final OpenSearchClient client;
         charFilterList.add("htmlfilter");
         charFilterList.add("patternfilter");
         
-     // 제거할 품사를 열거한다 : NR - 수사
+        // 제거할 품사를 열거한다 : NR - 수사
         List<String> stopTags = Arrays.asList("NR");
         
         // Token filter : 소문자 변환 / 비ASCII 문자를 ASCII 문자로 변환 / 한국어의 특정 품사를 제거
@@ -105,7 +111,8 @@ private final OpenSearchClient client;
         tokenFilterMap.put("asciifolding", new TokenFilter.Builder().definition(asciiFilter._toTokenFilterDefinition()).build());
         tokenFilterMap.put("nori_part_of_speech", new TokenFilter.Builder().definition(noriPartOfSpeechFilter._toTokenFilterDefinition()).build());
         
-        List<String> synonym = Arrays.asList("amazon, aws", "풋사과, 햇사과, 사과");
+        //List<String> synonym = Arrays.asList("amazon, aws", "풋사과, 햇사과, 사과");
+        List<String> synonym = readWordsFromFile(synonymsPath);
         
         SynonymGraphTokenFilter synonymFilter = new SynonymGraphTokenFilter.Builder().synonyms(synonym).expand(true).build();
         tokenFilterMap.put("synonym_graph", new TokenFilter.Builder().definition(synonymFilter._toTokenFilterDefinition()).build());
@@ -119,7 +126,8 @@ private final OpenSearchClient client;
 		tokenFilterList.add("nori_readingform"); // 한자의 한국어 검색을 가능하게 함
 		tokenFilterList.add("nori_part_of_speech");
 		
-		List<String> userDictionaryRules = Arrays.asList("낮말", "밤말");
+		//List<String> userDictionaryRules = Arrays.asList("낮말", "밤말");
+		List<String> userDictionaryRules = readWordsFromFile(dictionaryRulesPath);
 		
 		// 한글형태소분석기인 Nori 플러그인이 미리 설치되어 있어야 함
 		NoriTokenizer noriTokenizer = new NoriTokenizer.Builder()
@@ -313,5 +321,18 @@ private final OpenSearchClient client;
             e.printStackTrace();
         }	
 	}
+	
+	private static List<String> readWordsFromFile(String filePath) {
+        List<String> words = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                words.add(line.trim());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return words;
+    }
 	
 }

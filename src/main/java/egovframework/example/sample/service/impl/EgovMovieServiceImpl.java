@@ -1,5 +1,7 @@
 package egovframework.example.sample.service.impl;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +37,7 @@ import org.opensearch.client.opensearch.core.UpdateResponse;
 import org.opensearch.client.opensearch.indices.CreateIndexRequest;
 import org.opensearch.client.opensearch.indices.CreateIndexResponse;
 import org.opensearch.client.opensearch.indices.DeleteIndexRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import egovframework.example.sample.index.Movie;
@@ -46,6 +49,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequiredArgsConstructor
 public class EgovMovieServiceImpl extends EgovAbstractServiceImpl implements EgovMovieService {
+	
+	@Value("${synonyms.path}")
+	public String synonymsPath;
+	
+	@Value("${dictionary.path}")
+	public String dictionaryRulesPath;
 	
 	private final OpenSearchClient client;
 
@@ -83,7 +92,8 @@ public class EgovMovieServiceImpl extends EgovAbstractServiceImpl implements Ego
         tokenFilterMap.put("asciifolding", new TokenFilter.Builder().definition(asciiFilter._toTokenFilterDefinition()).build());
         tokenFilterMap.put("nori_part_of_speech", new TokenFilter.Builder().definition(noriPartOfSpeechFilter._toTokenFilterDefinition()).build());
         
-        List<String> synonym = Arrays.asList("amazon, aws", "풋사과, 햇사과, 사과");
+        //List<String> synonym = Arrays.asList("amazon, aws", "풋사과, 햇사과, 사과");
+        List<String> synonym = readWordsFromFile(synonymsPath);
         
         SynonymGraphTokenFilter synonymFilter = new SynonymGraphTokenFilter.Builder().synonyms(synonym).expand(true).build();
         tokenFilterMap.put("synonym_graph", new TokenFilter.Builder().definition(synonymFilter._toTokenFilterDefinition()).build());
@@ -97,7 +107,8 @@ public class EgovMovieServiceImpl extends EgovAbstractServiceImpl implements Ego
 		tokenFilterList.add("nori_readingform"); // 한자의 한국어 검색을 가능하게 함
 		tokenFilterList.add("nori_part_of_speech");
 		
-		List<String> userDictionaryRules = Arrays.asList("낮말", "밤말");
+		//List<String> userDictionaryRules = Arrays.asList("낮말", "밤말");
+		List<String> userDictionaryRules = readWordsFromFile(dictionaryRulesPath);
 		
 		// 한글형태소분석기인 Nori 플러그인이 미리 설치되어 있어야 함
 		NoriTokenizer noriTokenizer = new NoriTokenizer.Builder()
@@ -236,5 +247,18 @@ public class EgovMovieServiceImpl extends EgovAbstractServiceImpl implements Ego
         client.indices().delete(deleteRequest);
         log.debug(String.format("Index %s.", deleteRequest.index().toString().toLowerCase()));
 	}
+	
+	private static List<String> readWordsFromFile(String filePath) {
+        List<String> words = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                words.add(line.trim());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return words;
+    }
 
 }
