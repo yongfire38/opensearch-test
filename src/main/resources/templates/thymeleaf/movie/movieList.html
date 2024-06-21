@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title th:text="#{title.sample}"></title>
+    <title th:text="#{title.movie}"></title>
     <link id="contextPathHolder" th:data-contextPath="${#httpServletRequest.getContextPath()}"/>
     <link rel="stylesheet" type="text/css" th:href="@{/css/egovframework/sample.css}">
     <script type="text/javascript" th:src="@{/js/egovframework/jquery-3.6.1.min.js}"></script>
@@ -39,8 +39,48 @@
     </script>
 </head>
 
-<body>
-테스트
+<body style="text-align:center; margin:0 auto; display:inline; padding-top:100px;">
+
+	<div id="content_pop">
+	
+		<!-- Title -->
+        <div id="title">
+        	<ul>
+                <li>
+                    <img th:src="@{/images/egovframework/example/title_dot.gif}"/>
+                    <span th:text="#{list.sample}"></span>
+                </li>
+            </ul>
+        </div>
+        
+        <form id="detailForm" th:object="${movie}">
+            <input type="hidden" id="title" name="title"/>
+        </form>
+        
+        <!-- List -->
+        <div id="table">
+        	<table th:width="680px">
+        		<caption style="visibility:hidden">목록 표시하는 테이블</caption>
+        			<tr>
+        				<th th:width="40px">No</th>
+        				<th th:width="100px"><span th:text="#{title.movie.year}"></span></th>
+                    	<th th:width="200px"><span th:text="#{title.movie.director}"></span></th>
+                    	<th th:width="200px"><span th:text="#{title.movie.title}"></span></th>
+        			</tr>
+        			<tr data-th-each="movie, status : ${resultList}">
+        				<td th:class="listtd" th:align="center">
+                        	[[${(paginationInfo.getTotalRecordCount()+1)-((movie.getPageIndex()-1)*paginationInfo.getPageSize()+status.count)}]]
+                        </td>
+                    	<td th:class="listtd" th:align="left">[[${movie.year}]]</td>
+                    	<td th:class="listtd" th:align="left">[[${movie.director}]]</td>
+                    	<td th:class="listtd" th:align="left">[[${movie.title}]]</td>
+        			</tr>
+        	</table>
+        	
+        </div>
+	
+	</div>
+
 </body>
     
 
