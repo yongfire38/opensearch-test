@@ -12,6 +12,6 @@ import egovframework.example.sample.entity.Item;
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Integer> {
 
-	@Query(value = "SELECT id, title, embedding FROM public.items ORDER BY 1 - (embedding <=> CAST(:vector AS vector)) DESC LIMIT 2", nativeQuery = true)
+	@Query(value = "SELECT id, title, embedding FROM public.items ORDER BY 1 - (embedding <=> CAST(:vector AS vector)) DESC LIMIT 5", nativeQuery = true)
     List<Item> findItemsSimilarity(@Param("vector") String text);
 }
