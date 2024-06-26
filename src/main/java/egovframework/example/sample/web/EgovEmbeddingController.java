@@ -141,7 +141,7 @@ public class EgovEmbeddingController {
 		}
 		
 		
-		log.debug("##### OpenSearch getTextVecData Complete");
+		log.debug("##### OpenSearch insertTextVecData Complete");
 		
 		return resultVO;
 	}
