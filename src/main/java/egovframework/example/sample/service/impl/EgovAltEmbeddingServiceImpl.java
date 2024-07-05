@@ -1,7 +1,5 @@
 package egovframework.example.sample.service.impl;
 
-import static java.time.Duration.ofSeconds;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -14,9 +12,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch.core.BulkRequest;
+import org.opensearch.client.opensearch.core.BulkRequest.Builder;
 import org.opensearch.client.opensearch.core.SearchRequest;
 import org.opensearch.client.opensearch.core.SearchResponse;
-import org.opensearch.client.opensearch.core.BulkRequest.Builder;
 import org.opensearch.client.opensearch.core.bulk.IndexOperation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,8 +23,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
-import dev.langchain4j.model.output.Response;
+import dev.langchain4j.model.embedding.OnnxEmbeddingModel;
+import dev.langchain4j.model.embedding.PoolingMode;
 import egovframework.example.cmm.util.JsonParser;
 import egovframework.example.sample.service.EgovAltEmbeddingService;
 import lombok.RequiredArgsConstructor;
@@ -39,14 +37,17 @@ public class EgovAltEmbeddingServiceImpl extends EgovAbstractServiceImpl impleme
 	
 	private final OpenSearchClient client;
 	
-	@Value("${huggingface.access.token}")
-	public String accessToken;
-	
 	@Value("${bulk.insert.txt}")
 	public String txtFilePath;
 	
 	@Value("${bulk.insert.jsontext}")
 	public String jsonFilePath;
+	
+	@Value("${embedding.model}")
+	public String embeddingModel;
+	
+	@Value("${embedding.tokenizer}")
+	public String embeddingTokenizer;
 	
 	int index = 1;
 	
@@ -54,14 +55,12 @@ public class EgovAltEmbeddingServiceImpl extends EgovAbstractServiceImpl impleme
 	public SearchResponse<JsonNode> vectorAltSearch(String indexName, String query) throws IOException {
 		
 		//질의 문자열을 벡터로 변환한다
-		EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
-			        .accessToken(accessToken)
-			        .modelId("snunlp/KR-SBERT-V40K-klueNLI-augSTS")
-			        .waitForModel(true)
-			        .timeout(ofSeconds(60))
-			        .build();
+		EmbeddingModel embeddingModel = new OnnxEmbeddingModel(
+				"./model/model.onnx",
+				"./model/tokenizer.json",
+                PoolingMode.MEAN);
 		
-		Response<Embedding> response = embeddingModel.embed(query);
+		Embedding response = embeddingModel.embed(query).content();
 
 		// embedding 컬럼을 대상으로 검색 (유사한 순으로 5건까지 조회)
 		SearchRequest searchRequest = new SearchRequest.Builder()
@@ -69,7 +68,7 @@ public class EgovAltEmbeddingServiceImpl extends EgovAbstractServiceImpl impleme
 				.query(q -> q
 						.knn(k -> k
 							.field("embedding")
-							.vector(response.content().vector())
+							.vector(response.vector())
 							.k(5)
 						)
 				)
@@ -120,12 +119,11 @@ public class EgovAltEmbeddingServiceImpl extends EgovAbstractServiceImpl impleme
 	@Override
 	public void toJsonAltConverter() throws IOException {
 		
-		EmbeddingModel embeddingModel = HuggingFaceEmbeddingModel.builder()
-                .accessToken(accessToken)
-                .modelId("snunlp/KR-SBERT-V40K-klueNLI-augSTS")
-                .waitForModel(true)
-                .timeout(ofSeconds(60))
-                .build();
+		EmbeddingModel embeddingModel = new OnnxEmbeddingModel(
+				"./model/model.onnx",
+				"./model/tokenizer.json",
+                PoolingMode.MEAN);
+		
 		
 		try (FileWriter writer = new FileWriter("./example/output.json"); BufferedReader reader = new BufferedReader(new FileReader(txtFilePath))) {
 			
@@ -140,9 +138,9 @@ public class EgovAltEmbeddingServiceImpl extends EgovAbstractServiceImpl impleme
                 jsonObject.put("id", id);
                 jsonObject.put("text", line);
                 
-                Response<Embedding> response = embeddingModel.embed(line);
+                Embedding response = embeddingModel.embed(line).content();
             	
-                float[] embeddings =  response.content().vector();
+                float[] embeddings =  response.vector();
                 JSONArray embeddingArray = new JSONArray(embeddings);
                 jsonObject.put("embedding", embeddingArray);
 
