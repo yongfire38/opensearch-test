@@ -37,3 +37,6 @@ target/
 
 # OS
 .DS_Store
+
+# onnx model
+model/
