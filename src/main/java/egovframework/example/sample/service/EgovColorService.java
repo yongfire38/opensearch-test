@@ -3,7 +3,7 @@ package egovframework.example.sample.service;
 import java.io.IOException;
 import org.opensearch.client.opensearch.core.SearchResponse;
 import com.fasterxml.jackson.databind.JsonNode;
-import egovframework.example.sample.index.Color;
+import egovframework.example.sample.index.ColorIndex;
 
 public interface EgovColorService {
 	
@@ -11,7 +11,7 @@ public interface EgovColorService {
 
 	public void insertColorData(String indexName) throws IOException;
 	
-	public SearchResponse<JsonNode> colorSearch(String indexName, Color color) throws IOException;
+	public SearchResponse<JsonNode> colorSearch(String indexName, ColorIndex color) throws IOException;
 	
 	public SearchResponse<JsonNode> colorTextSearch(String indexName, String query) throws IOException;
 	

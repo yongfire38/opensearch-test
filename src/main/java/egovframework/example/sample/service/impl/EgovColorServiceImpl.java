@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import egovframework.example.cmm.util.JsonParser;
-import egovframework.example.sample.index.Color;
+import egovframework.example.sample.index.ColorIndex;
 import egovframework.example.sample.service.EgovColorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,7 +93,7 @@ public class EgovColorServiceImpl extends EgovAbstractServiceImpl implements Ego
 	}
 	
 	@Override
-	public SearchResponse<JsonNode> colorSearch(String indexName, Color color) throws IOException {
+	public SearchResponse<JsonNode> colorSearch(String indexName, ColorIndex color) throws IOException {
 		// rgb 컬럼을 대상으로 검색 (유사한 순으로 3건까지 조회)
 		SearchRequest searchRequest = new SearchRequest.Builder()
 				.index(indexName)
@@ -132,7 +132,7 @@ public class EgovColorServiceImpl extends EgovAbstractServiceImpl implements Ego
 			// 결과는 searchResponse.hits().hits().get(i).score() 순으로 정렬됨 (유사도). 
 			// step 2. 가장 상위의 것으로 rgb 값을 받아서 그걸로 벡터 검색을 실행하도록 한다.
 			JsonNode sourceNode = textSearchResponse.hits().hits().get(0).source();
-			Color color = getColorFromJsonNode(sourceNode);
+			ColorIndex color = getColorFromJsonNode(sourceNode);
 			
 			SearchRequest colorSearchRequest = new SearchRequest.Builder()
 						.index(indexName)
@@ -158,7 +158,7 @@ public class EgovColorServiceImpl extends EgovAbstractServiceImpl implements Ego
 		}
 	}
 	
-	private Color getColorFromJsonNode(JsonNode sourceNode) {
+	private ColorIndex getColorFromJsonNode(JsonNode sourceNode) {
 		
 	    int red = sourceNode.get("rgb").get(0).asInt();
 	    int green = sourceNode.get("rgb").get(1).asInt();
@@ -166,7 +166,7 @@ public class EgovColorServiceImpl extends EgovAbstractServiceImpl implements Ego
 	    
 	    log.debug("질의에서 얻어낸 rgb 값은:::::["+red+","+green+","+blue+"]");
 
-	    Color color = new Color();
+	    ColorIndex color = new ColorIndex();
 	    color.setRed(red);
 	    color.setGreen(green);
 	    color.setBlue(blue);

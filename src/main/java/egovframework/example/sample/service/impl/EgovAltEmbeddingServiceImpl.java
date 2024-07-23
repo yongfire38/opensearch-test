@@ -94,7 +94,7 @@ public class EgovAltEmbeddingServiceImpl extends EgovAbstractServiceImpl impleme
 		
 		//만들어진 json 파일을 읽어서 벌크 인덱싱 처리
 		List<Map<String, Object>> parsedJsonList = JsonParser.parseJsonList(jsonFilePath);
-		
+
 		Builder bulkRequestBuilder = new BulkRequest.Builder();
 		 
 		for (Map<String, Object> jsonMap : parsedJsonList) {
@@ -104,10 +104,12 @@ public class EgovAltEmbeddingServiceImpl extends EgovAbstractServiceImpl impleme
 		    );
 		    index++;     
 		}
-		 
+		
+		//Thread.sleep(1000);
+		
 		BulkRequest bulkRequest = bulkRequestBuilder.build();
-	
-		client.bulk(bulkRequest); 
+		
+		client.bulk(bulkRequest);	
 		
 		long afterTime = System.currentTimeMillis(); 
 		long secDiffTime = (afterTime - beforeTime)/1000;

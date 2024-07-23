@@ -49,6 +49,7 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.huggingface.HuggingFaceEmbeddingModel;
 import dev.langchain4j.model.output.Response;
 import egovframework.example.cmm.util.JsonParser;
+import egovframework.example.cmm.util.ReadWords;
 import egovframework.example.sample.service.EgovEmbeddingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -112,7 +113,7 @@ private final OpenSearchClient client;
         tokenFilterMap.put("nori_part_of_speech", new TokenFilter.Builder().definition(noriPartOfSpeechFilter._toTokenFilterDefinition()).build());
         
         //List<String> synonym = Arrays.asList("amazon, aws", "풋사과, 햇사과, 사과");
-        List<String> synonym = readWordsFromFile(synonymsPath);
+        List<String> synonym = ReadWords.readWordsFromFile(synonymsPath);
         
         SynonymGraphTokenFilter synonymFilter = new SynonymGraphTokenFilter.Builder().synonyms(synonym).expand(true).build();
         tokenFilterMap.put("synonym_graph", new TokenFilter.Builder().definition(synonymFilter._toTokenFilterDefinition()).build());
@@ -127,7 +128,7 @@ private final OpenSearchClient client;
 		tokenFilterList.add("nori_part_of_speech");
 		
 		//List<String> userDictionaryRules = Arrays.asList("낮말", "밤말");
-		List<String> userDictionaryRules = readWordsFromFile(dictionaryRulesPath);
+		List<String> userDictionaryRules = ReadWords.readWordsFromFile(dictionaryRulesPath);
 		
 		// 한글형태소분석기인 Nori 플러그인이 미리 설치되어 있어야 함
 		NoriTokenizer noriTokenizer = new NoriTokenizer.Builder()
@@ -157,6 +158,8 @@ private final OpenSearchClient client;
 		CreateIndexRequest createIndexRequest = new CreateIndexRequest.Builder()
 			    .index(indexName)
 			    .settings(s -> s
+			    	//.numberOfShards("2")
+			    	//.numberOfReplicas("1")
 			        .knn(true)
 			        .analysis(a -> a
 			        		.charFilter(charFilterMap)
@@ -321,18 +324,5 @@ private final OpenSearchClient client;
             e.printStackTrace();
         }	
 	}
-	
-	private static List<String> readWordsFromFile(String filePath) {
-        List<String> words = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                words.add(line.trim());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return words;
-    }
 	
 }

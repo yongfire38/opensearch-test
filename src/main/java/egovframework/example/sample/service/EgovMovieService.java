@@ -19,7 +19,7 @@ import java.io.IOException;
 
 import org.opensearch.client.opensearch.core.SearchResponse;
 
-import egovframework.example.sample.index.Movie;
+import egovframework.example.sample.index.MovieIndex;
 
 /**
  * @Class Name : EgovSampleService.java
@@ -39,13 +39,13 @@ public interface EgovMovieService {
 
 	public void createIndex(String indexName) throws IOException;
 	
-	public void insertData(String indexName, Movie movie, String id) throws IOException;
+	public void insertData(String indexName, MovieIndex movie, String id) throws IOException;
 	
-	public void updateData(String indexName, Movie movie, String id) throws IOException;
+	public void updateData(String indexName, MovieIndex movie, String id) throws IOException;
 	
-	public SearchResponse<Movie> searchAll(String indexName) throws IOException;
+	public SearchResponse<MovieIndex> searchAll(String indexName) throws IOException;
 	
-	public SearchResponse<Movie> search(String indexName, String query) throws IOException;
+	public SearchResponse<MovieIndex> search(String indexName, String query) throws IOException;
 	
 	public void deleteData(String indexName, String id) throws IOException;
 	
