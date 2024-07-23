@@ -76,7 +76,7 @@ public class EgovFaqServiceImpl extends EgovAbstractServiceImpl implements EgovF
 		charFilterList.add("punctuationCharFilter");
 		
 		// 제거할 품사를 열거한다
-		List<String> stopTags = ReadWords.readWordsFromFile(synonymsPath);
+		List<String> stopTags = ReadWords.readWordsFromFile(stopTagsPath);
 		
 		// Token filter : 소문자 변환 / 비ASCII 문자를 ASCII 문자로 변환 / 한국어의 특정 품사를 제거
 		LowercaseTokenFilter lowerFilter = new LowercaseTokenFilter.Builder().build();
@@ -86,7 +86,7 @@ public class EgovFaqServiceImpl extends EgovAbstractServiceImpl implements EgovF
         tokenFilterMap.put("asciifolding", new TokenFilter.Builder().definition(asciiFilter._toTokenFilterDefinition()).build());
         tokenFilterMap.put("nori_part_of_speech", new TokenFilter.Builder().definition(noriPartOfSpeechFilter._toTokenFilterDefinition()).build());
         
-      //List<String> synonym = Arrays.asList("amazon, aws", "풋사과, 햇사과, 사과");
+        //List<String> synonym = Arrays.asList("amazon, aws", "풋사과, 햇사과, 사과");
         List<String> synonym = ReadWords.readWordsFromFile(synonymsPath);
         
         SynonymGraphTokenFilter synonymFilter = new SynonymGraphTokenFilter.Builder().synonyms(synonym).expand(true).build();
