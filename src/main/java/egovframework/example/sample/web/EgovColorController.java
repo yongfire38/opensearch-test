@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import egovframework.example.cmm.ResponseCode;
 import egovframework.example.cmm.ResultVO;
-import egovframework.example.sample.index.Color;
+import egovframework.example.sample.index.ColorIndex;
 import egovframework.example.sample.service.EgovColorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -89,7 +89,7 @@ public class EgovColorController {
 			tags = {"EgovColorController"}
 	)
 	@PostMapping("/colorList/{indexName}")
-	public ResultVO listColorData(@PathVariable String indexName, Color color) {
+	public ResultVO listColorData(@PathVariable String indexName, ColorIndex color) {
 		
 		ResultVO resultVO = new ResultVO();
 		Map<String, Object> resultMap = new HashMap<String, Object>();

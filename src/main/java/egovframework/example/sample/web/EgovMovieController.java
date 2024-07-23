@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import egovframework.example.cmm.ResponseCode;
 import egovframework.example.cmm.ResultVO;
-import egovframework.example.sample.index.Movie;
+import egovframework.example.sample.index.MovieIndex;
 import egovframework.example.sample.service.EgovMovieService;
 import egovframework.example.sample.service.SampleDefaultVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,11 +49,11 @@ public class EgovMovieController {
 		ResultVO resultVO = new ResultVO();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		
-		List<Movie> resultList = new ArrayList<>();
+		List<MovieIndex> resultList = new ArrayList<>();
 		
 		try {
 			log.debug("##### OpenSearch getList...");
-			SearchResponse<Movie> searchResponse = movieService.searchAll(indexName);
+			SearchResponse<MovieIndex> searchResponse = movieService.searchAll(indexName);
 			
 			for (int i = 0; i< searchResponse.hits().hits().size(); i++) {
 				resultList.add(searchResponse.hits().hits().get(i).source());
@@ -86,11 +86,11 @@ public class EgovMovieController {
 		ResultVO resultVO = new ResultVO();
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		
-		List<Movie> resultList = new ArrayList<>();
+		List<MovieIndex> resultList = new ArrayList<>();
 		
 		try {
 			log.debug("##### OpenSearch getList...");
-			SearchResponse<Movie> searchResponse = movieService.search(indexName, query);
+			SearchResponse<MovieIndex> searchResponse = movieService.search(indexName, query);
 			
 			for (int i = 0; i< searchResponse.hits().hits().size(); i++) {
 				resultList.add(searchResponse.hits().hits().get(i).source());
@@ -145,7 +145,7 @@ public class EgovMovieController {
 	)
 	@ResponseBody
 	@PostMapping("/insert/{indexName}/{id}")
-	public ResultVO insertData(Movie movie, @PathVariable String indexName, @PathVariable String id) {
+	public ResultVO insertData(MovieIndex movie, @PathVariable String indexName, @PathVariable String id) {
 		
 		ResultVO resultVO = new ResultVO();
 		
@@ -172,7 +172,7 @@ public class EgovMovieController {
 	)
 	@ResponseBody
 	@PutMapping("/update/{indexName}/{id}")
-	public ResultVO updateData(Movie movie, @PathVariable String indexName, @PathVariable String id) {
+	public ResultVO updateData(MovieIndex movie, @PathVariable String indexName, @PathVariable String id) {
 		
 		ResultVO resultVO = new ResultVO();
 		
@@ -243,7 +243,7 @@ public class EgovMovieController {
 	}
 	
 	@GetMapping("/")
-	public String search(Model model, Movie movie) throws Exception {
+	public String search(Model model, MovieIndex movie) throws Exception {
 		return this.movieList(model, movie);
 	}
 	
@@ -253,7 +253,7 @@ public class EgovMovieController {
 			tags = {"EgovSampleController"}
 	)
 	@PostMapping("/movie/list")
-	public String movieList(Model model, @ModelAttribute Movie movie) {
+	public String movieList(Model model, @ModelAttribute MovieIndex movie) {
 		
 		SampleDefaultVO sampleDefaultVO = new SampleDefaultVO();
 		
@@ -263,11 +263,11 @@ public class EgovMovieController {
 		paginationInfo.setRecordCountPerPage(sampleDefaultVO.getPageUnit());
 		paginationInfo.setPageSize(sampleDefaultVO.getPageSize());
 		
-		List<Movie> resultList = new ArrayList<>();
+		List<MovieIndex> resultList = new ArrayList<>();
 		
 		try {
 			
-			SearchResponse<Movie> searchResponse = null;
+			SearchResponse<MovieIndex> searchResponse = null;
 			
 			if(movie.getTitle() != null && !movie.getTitle().equals("")) {
 				log.debug("##### OpenSearch getMovieData...");

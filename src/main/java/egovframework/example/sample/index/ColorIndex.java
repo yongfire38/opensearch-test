@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Schema(description = "테스트 데이터 VO(RGB)")
 @AllArgsConstructor
 @NoArgsConstructor
-public class Color {
+public class ColorIndex {
 
 	private Integer red;
 	private Integer green;
