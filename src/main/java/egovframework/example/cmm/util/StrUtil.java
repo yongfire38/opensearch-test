@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReadWords {
+public class StrUtil {
 	
 	public static List<String> readWordsFromFile(String filePath) {
         List<String> words = new ArrayList<>();
@@ -20,5 +20,21 @@ public class ReadWords {
         }
         return words;
     }
+	
+	public static String cleanString(String input) {
+	    if (input == null) {
+	        return null;
+	    }
+	    return input.replace("\r", " ")
+	                .replace("\n", " ")
+	                .replace("\\", " ")
+	                .replace("&lt;", "<")
+	                .replace("&gt;", ">")
+	                .replace("&amp;", "&")
+	                .replace("&quot;", "\"")
+	                .replace("&nbsp;", " ")
+	                .replace("&#39;", "'")
+	                .replace("&#34;", "\"");
+	}
 
 }

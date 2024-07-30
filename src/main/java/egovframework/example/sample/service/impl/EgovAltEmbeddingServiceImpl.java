@@ -56,8 +56,8 @@ public class EgovAltEmbeddingServiceImpl extends EgovAbstractServiceImpl impleme
 		
 		//질의 문자열을 벡터로 변환한다
 		EmbeddingModel embeddingModel = new OnnxEmbeddingModel(
-				"./model/model.onnx",
-				"./model/tokenizer.json",
+				"./model/KR-SBERT-V40K-klueNLI-augSTS/model.onnx",
+				"./model/KR-SBERT-V40K-klueNLI-augSTS/tokenizer.json",
                 PoolingMode.MEAN);
 		
 		Embedding response = embeddingModel.embed(query).content();
@@ -122,8 +122,8 @@ public class EgovAltEmbeddingServiceImpl extends EgovAbstractServiceImpl impleme
 	public void toJsonAltConverter() throws IOException {
 		
 		EmbeddingModel embeddingModel = new OnnxEmbeddingModel(
-				"./model/model.onnx",
-				"./model/tokenizer.json",
+				"./model/KR-SBERT-V40K-klueNLI-augSTS/model.onnx",
+				"./model/KR-SBERT-V40K-klueNLI-augSTS/tokenizer.json",
                 PoolingMode.MEAN);
 		
 		
