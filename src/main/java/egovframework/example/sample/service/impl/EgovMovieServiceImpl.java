@@ -38,7 +38,7 @@ import org.opensearch.client.opensearch.indices.DeleteIndexRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import egovframework.example.cmm.util.ReadWords;
+import egovframework.example.cmm.util.StrUtil;
 import egovframework.example.sample.index.MovieIndex;
 import egovframework.example.sample.service.EgovMovieService;
 import lombok.RequiredArgsConstructor;
@@ -92,7 +92,7 @@ public class EgovMovieServiceImpl extends EgovAbstractServiceImpl implements Ego
         tokenFilterMap.put("nori_part_of_speech", new TokenFilter.Builder().definition(noriPartOfSpeechFilter._toTokenFilterDefinition()).build());
         
         //List<String> synonym = Arrays.asList("amazon, aws", "풋사과, 햇사과, 사과");
-        List<String> synonym = ReadWords.readWordsFromFile(synonymsPath);
+        List<String> synonym = StrUtil.readWordsFromFile(synonymsPath);
         
         SynonymGraphTokenFilter synonymFilter = new SynonymGraphTokenFilter.Builder().synonyms(synonym).expand(true).build();
         tokenFilterMap.put("synonym_graph", new TokenFilter.Builder().definition(synonymFilter._toTokenFilterDefinition()).build());
@@ -107,7 +107,7 @@ public class EgovMovieServiceImpl extends EgovAbstractServiceImpl implements Ego
 		tokenFilterList.add("nori_part_of_speech");
 		
 		//List<String> userDictionaryRules = Arrays.asList("낮말", "밤말");
-		List<String> userDictionaryRules = ReadWords.readWordsFromFile(dictionaryRulesPath);
+		List<String> userDictionaryRules = StrUtil.readWordsFromFile(dictionaryRulesPath);
 		
 		// 한글형태소분석기인 Nori 플러그인이 미리 설치되어 있어야 함
 		NoriTokenizer noriTokenizer = new NoriTokenizer.Builder()

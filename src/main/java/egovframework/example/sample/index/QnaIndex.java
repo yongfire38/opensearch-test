@@ -11,10 +11,11 @@ import lombok.Setter;
 @Schema(description = "테스트 데이터 VO(묻고 답하기)")
 @AllArgsConstructor
 @NoArgsConstructor
-public class FaqIndex {
+public class QnaIndex {
 	
-	private String questionSubject;
-    private String questionContent;
-    private String answerContent;
+	private String qaId;
+	private String qestnSj;
+	private String qestnCn;
+	private String answerCn;
 
 }
