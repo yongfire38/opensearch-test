@@ -312,7 +312,7 @@ public class EgovQnaServiceImpl extends EgovAbstractServiceImpl implements EgovQ
 		BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
 		
 		// step 1. 네이티브 쿼리를 던져서 데이터를 얻는다
-		List<QnaInfo> qnaInfoList = qnaRepository.findQnaInfo();
+		List<QnaInfo> qnaInfoList = qnaRepository.findTotalQnaInfo();
 		
 		// step 2. 얻어낸 데이터 전처리
 		qnaInfoList.stream().map(qnaInfo -> {
@@ -386,7 +386,7 @@ public class EgovQnaServiceImpl extends EgovAbstractServiceImpl implements EgovQ
 		BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
 		
 		// step 1. 네이티브 쿼리를 던져서 데이터를 얻는다
-		List<QnaInfo> qnaInfoList = qnaRepository.findQnaInfo();
+		List<QnaInfo> qnaInfoList = qnaRepository.findTotalQnaInfo();
 		
 		// step 2. 얻어낸 데이터 전처리 (+임베딩을 수행, 임베딩은 질문 내용만 임베딩한다)
 		qnaInfoList.stream().map(qnaInfo -> {
@@ -430,6 +430,19 @@ public class EgovQnaServiceImpl extends EgovAbstractServiceImpl implements EgovQ
 		    e.printStackTrace();
 		}
 		
+	}
+	
+	@Override
+	public SearchResponse<JsonNode> termSearch(String indexName, String query) throws IOException {
+		// questionContent 컬럼을 대상으로 검색 (대소문자 구분은 하지 않는다, 5건까지 조회)
+		SearchRequest termSearchRequest = new SearchRequest.Builder()
+				.size(5)
+				.index(indexName)
+				.query(q -> q.term(t -> t.field("questionContent").value(FieldValue.of(query)).caseInsensitive(true))).build();
+		
+		SearchResponse<JsonNode> termSearchResponse = client.search(termSearchRequest, JsonNode.class);
+		
+		return termSearchResponse;
 	}
 
 	@Override
@@ -480,10 +493,77 @@ public class EgovQnaServiceImpl extends EgovAbstractServiceImpl implements EgovQ
 	}
 	
 	@Override
+	public void insertSplitedEmbeddingData(String indexName) {
+		
+		EmbeddingModel embeddingModel = new OnnxEmbeddingModel(
+				"./model/ko-sroberta-multitask/model.onnx",
+				"./model/ko-sroberta-multitask/tokenizer.json",
+                PoolingMode.MEAN);
+		
+		// step 1. mySql 테이블 전체 데이터 row 수에서 Limit 수만큼 끝으면 쿼리를 몇 번 수행하여야 할지 구한다.
+		int queryCnt = qnaRepository.findQueryCnt();
+		
+		// step 2. 1에서 구한 수만큼 순회하면서
+		for (int i = 0; i < queryCnt; i++) {
+			
+			long beforeTime = System.currentTimeMillis();
+			
+			BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
+			
+			int offset = i * 2000;
+			
+			//step 3. 네이티브 쿼리를 던져서 데이터를 얻는다
+			List<QnaInfo> splittedQnaInfoList = qnaRepository.findSplitedQnaInfo(offset);
+			
+			// step 4. 얻어낸 데이터 전처리 (+임베딩을 수행, 임베딩은 질문 내용만 임베딩한다)
+			splittedQnaInfoList.stream().map(qnaInfo -> {
+				Map<String, Object> dataMap = new HashMap<>();
+				
+				Embedding questionResponse = embeddingModel.embed(StrUtil.cleanString(qnaInfo.getQestnCn())).content();
+				
+				float[] questionEmbeddings =  questionResponse.vector();
+				
+				// QnaInfo 객체의 필드들을 정리하여 Map에 추가
+				dataMap.put("id", qnaInfo.getQaId());
+				dataMap.put("questionSubject", StrUtil.cleanString(qnaInfo.getQestnSj()));
+				dataMap.put("questionContent", StrUtil.cleanString(qnaInfo.getQestnCn()));
+				dataMap.put("answerContent", StrUtil.cleanString(qnaInfo.getAnswerCn()));
+				dataMap.put("questionEmbedding", questionEmbeddings);
+				
+				return dataMap;
+			})
+			.forEach(dataMap -> bulkRequestBuilder.operations(ops -> 
+	    		ops.index(IndexOperation.of(io -> 
+	        		io.index(indexName).id(String.valueOf(dataMap.get("id"))).document(dataMap)))
+		    ));
+			// step 5. 임베딩 값 추가 및 전처리한 데이터를 인덱싱한다
+			try {
+			    BulkResponse bulkResponse = client.bulk(bulkRequestBuilder.build());
+			    if (bulkResponse.errors()) {
+			    	log.debug("Bulk operation had errors");
+			    } else {
+			    	log.debug("Bulk operation completed successfully");
+			    	
+			    	long afterTime = System.currentTimeMillis(); 
+					long secDiffTime = (afterTime - beforeTime)/1000;
+					
+					log.debug("offset : " + offset + "완료");
+					log.debug("시간차이(m) : " + secDiffTime + "초");
+			    }
+			} catch (Exception e) {
+			    e.printStackTrace();
+			}
+			
+		}
+	}
+	
+	@Override
 	public List<QnaInfo> getQnaInfo() {
-		List<QnaInfo> qnaInfoList = qnaRepository.findQnaInfo();
+		List<QnaInfo> qnaInfoList = qnaRepository.findTotalQnaInfo();
 		
 		return qnaInfoList;
 	}
+
+	
 
 }
