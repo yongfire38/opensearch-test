@@ -15,14 +15,18 @@ public interface EgovQnaService {
 	
 	public void createEmbeddingIndex(String indexName) throws IOException;
 	
-	public List<QnaInfo> getQnaInfo();
-	
 	public void insertData(String indexName);
 	
 	public void insertEmbeddingData(String indexName);
 	
+	public void insertSplitedEmbeddingData(String indexName);
+	
+	public SearchResponse<JsonNode> termSearch(String indexName, String query) throws IOException;
+	
 	public SearchResponse<JsonNode> textSearch(String indexName, String query) throws IOException;
 	
 	public SearchResponse<JsonNode> vectorSearch(String indexName, String query) throws IOException;
+	
+	public List<QnaInfo> getQnaInfo();
 	
 }
