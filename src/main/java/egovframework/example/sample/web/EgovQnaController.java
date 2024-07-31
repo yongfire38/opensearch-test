@@ -92,6 +92,9 @@ public class EgovQnaController {
 		
 		try {
 			qnaService.insertData(indexName);
+			
+			resultVO.setResultCode(ResponseCode.SUCCESS.getCode());
+			resultVO.setResultMessage(ResponseCode.SUCCESS.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -102,7 +105,7 @@ public class EgovQnaController {
 	}
 	
 	@Operation(
-			summary = "임베딩 값이 포함된 데이터 추가",
+			summary = "임베딩 값이 포함된 데이터를 쿼리에서 얻은 레코드 수만큼 추가",
 			description = "OpenSearch 인덱스(embedding)에 mySql 테이블의 데이터를 추가(벌크 insert)",
 			tags = {"EgovQnaController"}
 	)
@@ -112,12 +115,72 @@ public class EgovQnaController {
 		
 		try {
 			qnaService.insertEmbeddingData(indexName);
+			
+			resultVO.setResultCode(ResponseCode.SUCCESS.getCode());
+			resultVO.setResultMessage(ResponseCode.SUCCESS.getMessage());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
 		log.debug("##### OpenSearch insertMysqlEmbeddingData Complete");
 		
+		return resultVO;
+	}
+	
+	@Operation(
+			summary = "임베딩 값이 포함된 데이터를 전부 추가",
+			description = "OpenSearch 인덱스(embedding)에 mySql 테이블의 데이터를 추가(분할 insert)",
+			tags = {"EgovQnaController"}
+	)
+	@GetMapping("/insertSplitedEmbeddingData/{indexName}")
+	public ResultVO insertSplitedEmbeddingData(@PathVariable String indexName) {
+		ResultVO resultVO = new ResultVO();
+		
+		try {
+			qnaService.insertSplitedEmbeddingData(indexName);
+			
+			resultVO.setResultCode(ResponseCode.SUCCESS.getCode());
+			resultVO.setResultMessage(ResponseCode.SUCCESS.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		log.debug("##### OpenSearch insertSplitedEmbeddingData Complete");
+		
+		return resultVO;
+	}
+	
+	@Operation(
+			summary = "단어 검색(Term) 수행",
+			description = "질문 내용을 대상으로 단어 검색 수행. 대소문자는 구분하지 않는다",
+			tags = {"EgovQnaController"}
+	)
+	@GetMapping("/termSearch/{indexName}/{query}")
+	public ResultVO termSearch(@PathVariable String indexName, @PathVariable String query) throws IOException {
+		ResultVO resultVO = new ResultVO();
+		Map<String, Object> totalResultMap = new HashMap<String, Object>();
+
+		List<Object> resultList = new ArrayList<>();
+
+		try {
+			SearchResponse<JsonNode> searchResponse = qnaService.termSearch(indexName, query);
+
+			for (int i = 0; i < searchResponse.hits().hits().size(); i++) {
+				Map<String, Object> resultMap = createResultMap(searchResponse, i);
+				resultList.add(resultMap);
+			}
+			totalResultMap.put("resultList", resultList);
+
+			resultVO.setResult(totalResultMap);
+			resultVO.setResultCode(ResponseCode.SUCCESS.getCode());
+			resultVO.setResultMessage(ResponseCode.SUCCESS.getMessage());
+
+			log.debug("##### OpenSearch getTermData Complete");
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		return resultVO;
 	}
 	
@@ -189,7 +252,6 @@ public class EgovQnaController {
 
 		return resultVO;
 	}
-	
 	
 	@Operation(
 			summary = "일괄 조회",
