@@ -265,7 +265,6 @@ public class EgovQnaController {
 	
 	private Map<String, Object> createResultMap(SearchResponse<JsonNode> searchResponse, int index) {
 		Map<String, Object> resultMap = new HashMap<>();
-		
 		String url = "https://www.egovframe.go.kr/home/qainfo/qainfoRead.do?pagerOffset=0&searchKey=&searchValue=&menuNo=69&qaId="
 				+ searchResponse.hits().hits().get(index).source().get("id").asText();
 	    resultMap.put("score", searchResponse.hits().hits().get(index).score());
