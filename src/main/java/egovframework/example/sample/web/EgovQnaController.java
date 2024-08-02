@@ -189,7 +189,7 @@ public class EgovQnaController {
 			description = "질문 내용을 대상으로 한국어 텍스트 검색 수행. 약간의 오타는 무시하는 설정 추가",
 			tags = {"EgovQnaController"}
 	)
-	@GetMapping("/koreanTextSearch/{indexName}/{query}")
+	@GetMapping("/koreanTextSearch/{indexName}/search/{query}")
 	public ResultVO textSearch(@PathVariable String indexName, @PathVariable String query) throws IOException {
 		ResultVO resultVO = new ResultVO();
 		Map<String, Object> totalResultMap = new HashMap<String, Object>();
@@ -223,7 +223,7 @@ public class EgovQnaController {
 			description = "질문 내용을 대상으로 벡터 데이터가 있는 인덱스의 데이터를 벡터 검색",
 			tags = {"EgovQnaController"}
 	)
-	@GetMapping("/vecSearch/{indexName}/{query}")
+	@GetMapping("/vecSearch/{indexName}/search/{query}")
 	public ResultVO vectorSearch(@PathVariable String indexName, @PathVariable String query) throws IOException {
 		ResultVO resultVO = new ResultVO();
 		Map<String, Object> totalResultMap = new HashMap<String, Object>();
@@ -265,8 +265,12 @@ public class EgovQnaController {
 	
 	private Map<String, Object> createResultMap(SearchResponse<JsonNode> searchResponse, int index) {
 		Map<String, Object> resultMap = new HashMap<>();
+		String url = "https://www.egovframe.go.kr/home/qainfo/qainfoRead.do?pagerOffset=0&searchKey=&searchValue=&menuNo=69&qaId="
+				+ searchResponse.hits().hits().get(index).source().get("id").asText();
 	    resultMap.put("score", searchResponse.hits().hits().get(index).score());
 	    resultMap.put("id", searchResponse.hits().hits().get(index).source().get("id"));
+	    resultMap.put("url",url);
+	    resultMap.put("questionSubject", searchResponse.hits().hits().get(index).source().get("questionSubject"));
 	    resultMap.put("questionContent", searchResponse.hits().hits().get(index).source().get("questionContent"));
 	    return resultMap;
 	}
