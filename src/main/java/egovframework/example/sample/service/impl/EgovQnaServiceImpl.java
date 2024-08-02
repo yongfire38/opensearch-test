@@ -40,7 +40,6 @@ import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.OnnxEmbeddingModel;
 import dev.langchain4j.model.embedding.PoolingMode;
-import dev.langchain4j.model.output.Response;
 import egovframework.example.cmm.util.StrUtil;
 import egovframework.example.sample.repository.QnaRepository;
 import egovframework.example.sample.repository.QnaRepository.QnaInfo;
@@ -468,15 +467,16 @@ public class EgovQnaServiceImpl extends EgovAbstractServiceImpl implements EgovQ
 				"./model/ko-sroberta-multitask/tokenizer.json",
                 PoolingMode.MEAN);
 		
-		Response<Embedding> response = embeddingModel.embed(query);
+		Embedding response = embeddingModel.embed(query).content();
 
 		// questionEmbedding 컬럼을 대상으로 검색 (유사한 순으로 5건까지 조회)
 		SearchRequest searchRequest = new SearchRequest.Builder()
 				.index(indexName)
+				.size(5)
 				.query(q -> q
 						.knn(k -> k
 							.field("questionEmbedding")
-							.vector(response.content().vector())
+							.vector(response.vector())
 							.k(5)
 						)
 				)
