@@ -189,7 +189,7 @@ public class EgovQnaController {
 			description = "질문 내용을 대상으로 한국어 텍스트 검색 수행. 약간의 오타는 무시하는 설정 추가",
 			tags = {"EgovQnaController"}
 	)
-	@GetMapping("/koreanTextSearch/{indexName}/search/{query}")
+	@GetMapping("/koreanTextSearch/{indexName}/{query}")
 	public ResultVO textSearch(@PathVariable String indexName, @PathVariable String query) throws IOException {
 		ResultVO resultVO = new ResultVO();
 		Map<String, Object> totalResultMap = new HashMap<String, Object>();
@@ -223,7 +223,7 @@ public class EgovQnaController {
 			description = "질문 내용을 대상으로 벡터 데이터가 있는 인덱스의 데이터를 벡터 검색",
 			tags = {"EgovQnaController"}
 	)
-	@GetMapping("/vecSearch/{indexName}/search/{query}")
+	@GetMapping("/vecSearch/{indexName}/{query}")
 	public ResultVO vectorSearch(@PathVariable String indexName, @PathVariable String query) throws IOException {
 		ResultVO resultVO = new ResultVO();
 		Map<String, Object> totalResultMap = new HashMap<String, Object>();
